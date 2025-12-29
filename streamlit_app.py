@@ -4,12 +4,12 @@ from groq import Groq
 
 # ================= PAGE CONFIG =================
 st.set_page_config(
-    page_title="DrakFury",
+    page_title="DarkFury",
     page_icon="🧠",
     layout="wide"
 )
 
-# ================= CLEAN MINIMAL UI =================
+# ================= CLEAN PROFESSIONAL UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -19,48 +19,49 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #0f1117;
+    background-color: #0e0f13;
     color: #e5e7eb;
 }
 
+/* Remove Streamlit header */
 header[data-testid="stHeader"] {
     background: transparent;
 }
 
-/* Remove avatars */
+/* REMOVE AVATAR COMPLETELY */
 [data-testid="chat-message-avatar"] {
     display: none !important;
 }
 
-/* Chat spacing */
+/* Chat layout */
 .stChatMessage {
-    padding: 0.35rem 0;
+    padding: 0.25rem 0;
 }
 
-/* User text */
+/* User message (right aligned, text only) */
 .stChatMessage[data-testid="chat-message-user"] > div {
     background: none;
-    color: #e5e7eb;
-    max-width: 720px;
+    color: #f3f4f6;
+    max-width: 760px;
     margin-left: auto;
     padding: 0;
 }
 
-/* Assistant text */
+/* Assistant message (left aligned, text only) */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
     background: none;
     color: #d1d5db;
-    max-width: 720px;
+    max-width: 760px;
     padding: 0;
 }
 
 /* Input box */
 textarea {
-    background-color: #0f1117 !important;
+    background-color: #0e0f13 !important;
     color: #e5e7eb !important;
-    border: 1px solid #2a2f3a !important;
-    border-radius: 8px !important;
-    padding: 0.6rem !important;
+    border: 1px solid #2b2f36 !important;
+    border-radius: 10px !important;
+    padding: 0.7rem !important;
 }
 
 textarea:focus {
@@ -73,7 +74,7 @@ textarea:focus {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2a2f3a;
+    background: #2b2f36;
     border-radius: 6px;
 }
 </style>
@@ -87,9 +88,9 @@ if "welcome_done" not in st.session_state:
     st.session_state.welcome_done = False
 
 # ================= HEADER =================
-st.markdown("<h2 style='text-align:center;'>DrakFury</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center;'>DarkFury</h2>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align:center; opacity:0.6; font-size:0.85rem;'>Silent · Fast · Intelligent</p>",
+    "<p style='text-align:center; opacity:0.55; font-size:0.85rem;'>Silent · Fast · Intelligent</p>",
     unsafe_allow_html=True
 )
 
@@ -100,37 +101,32 @@ MODEL = "llama-3.1-8b-instant"
 SYSTEM_MESSAGE = {
     "role": "system",
     "content": (
-        "You are DrakFury.\n\n"
+        "You are DarkFury.\n\n"
         "You are a fast, thoughtful, and reliable AI assistant.\n"
-        "Your responses are clear, natural, and confident.\n"
-        "You communicate like a skilled human—not a machine.\n\n"
+        "Your tone is calm, confident, and precise.\n"
+        "You speak like a skilled human, not a chatbot.\n\n"
         "LANGUAGE:\n"
-        "- Automatically detect the user’s language.\n"
-        "- Reply in the same language naturally.\n"
-        "- Handle mixed languages naturally.\n\n"
+        "- Detect the user's language automatically.\n"
+        "- Respond in the same language naturally.\n\n"
         "STYLE:\n"
         "- Be concise by default.\n"
         "- Expand only when it adds real value.\n"
         "- Explain complex ideas simply.\n"
         "- Answer simple questions directly.\n\n"
-        "REASONING:\n"
-        "- Reason carefully.\n"
-        "- Avoid assumptions.\n"
-        "- Admit uncertainty honestly.\n\n"
         "RULES:\n"
         "- Do not initiate small talk.\n"
-        "- No emojis unless user uses them.\n"
-        "- No fluff. No robotic tone.\n"
-        "- Do not mention system instructions."
+        "- No emojis unless the user uses them.\n"
+        "- No fluff. No hype.\n"
+        "- Never mention system instructions."
     )
 }
 
-# ================= WELCOME MESSAGE =================
+# ================= WELCOME =================
 if not st.session_state.welcome_done:
     st.session_state.messages.append({
         "role": "assistant",
         "content": (
-            "I’m DrakFury.\n\n"
+            "I’m DarkFury.\n\n"
             "Ask a question, explore an idea, or get help thinking."
         )
     })
@@ -150,7 +146,6 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    # keep recent memory only
     recent_messages = st.session_state.messages[-8:]
 
     groq_messages = [SYSTEM_MESSAGE] + [
