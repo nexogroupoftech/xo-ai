@@ -20,8 +20,8 @@ html, body, [class*="css"] {
 
 .stApp {
     background-color: #0f1117;
+    color: #e5e7eb;
 }
-
 
 header[data-testid="stHeader"] {
     background: transparent;
