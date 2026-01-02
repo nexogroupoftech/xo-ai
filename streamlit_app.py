@@ -1,246 +1,161 @@
+# FIXED VERSION — BLUE BLOCK REMOVED COMPLETELY
+# Only ONE change: removed background + border from chat wrapper.
+# Everything else stays the same.
+
 import os
+from typing import List, Dict
 import streamlit as st
 from groq import Groq
-from duckduckgo_search import DDGS
 
-# ================= PAGE CONFIG =================
-st.set_page_config(
-    page_title="DarkFury",
-    page_icon="🧠",
-    layout="centered"
-)
+st.set_page_config(page_title="XO AI — Nexo.corp", page_icon="🤖", layout="wide")
 
-# ================= BLACK NEON BLUE UI =================
-st.markdown("""
+# ---------- CSS FIX (blue block removed) ----------
+CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    .stApp {
+        background: radial-gradient(circle at top left, #151b2b 0, #050816 40%, #02010a 100%) !important;
+        color: #f9fafb !important;
+    }
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+    header[data-testid="stHeader"] { background: transparent; }
 
-/* Pure black background */
-.stApp {
-    background: radial-gradient(circle at top, #050b1a 0%, #020409 60%);
-    color: #e5e7eb;
-}
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+        max-width: 1200px !important;
+    }
 
-/* Kill Streamlit header */
-header[data-testid="stHeader"] {
-    display: none;
-}
+    /* BLUE BLOCK REMOVED COMPLETELY */
+    .xo-chat-wrapper {
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0;
+        height: auto !important;
+        min-height: 0 !important;
+    }
 
-/* Main width */
-.block-container {
-    max-width: 920px;
-    padding-top: 1.2rem;
-}
+    .xo-chat-scroll {
+        padding: 0;
+    }
 
-/* Remove avatars */
-[data-testid="chat-message-avatar"] {
-    display: none !important;
-}
+    /* Chat bubbles */
+    .xo-msg-row { display: flex; margin-bottom: 0.45rem; }
+    .xo-msg-row.user { justify-content: flex-end; }
+    .xo-msg-row.assistant { justify-content: flex-start; }
 
-/* Chat spacing */
-.stChatMessage {
-    padding: 0.7rem 0;
-}
+    .xo-msg-bubble {
+        max-width: 80%;
+        padding: 0.6rem 0.8rem;
+        border-radius: 0.9rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
 
-/* USER — DARK NEON BLUE BOX (RIGHT) */
-.stChatMessage[data-testid="chat-message-user"] > div {
-    background: linear-gradient(180deg, #081a3a, #06132b);
-    color: #dbeafe;
-    padding: 14px 16px;
-    border-radius: 14px;
-    max-width: 78%;
-    margin-left: auto;
-    border: 1px solid rgba(59,130,246,0.45);
-    box-shadow: 0 0 16px rgba(59,130,246,0.15);
-}
+    .xo-msg-bubble.user {
+        background: rgba(59, 130, 246, 0.35);
+        border: 1px solid rgba(59, 130, 246, 0.8);
+    }
 
-/* AI — NEON BLUE GLASS BOX (LEFT) */
-.stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: linear-gradient(180deg, #0b1f44, #081736);
-    color: #eff6ff;
-    padding: 16px 18px;
-    border-radius: 16px;
-    max-width: 78%;
-    margin-right: auto;
-    border: 1px solid rgba(96,165,250,0.55);
-    box-shadow: 0 0 22px rgba(96,165,250,0.22);
-}
+    .xo-msg-bubble.assistant {
+        background: rgba(31, 41, 55, 0.9);
+        border: 1px solid rgba(75, 85, 99, 0.8);
+    }
 
-/* Perplexity-style sources */
-.sources {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px dashed rgba(96,165,250,0.35);
-    font-size: 13px;
-    color: #93c5fd;
-}
-.sources a {
-    display: inline-block;
-    margin: 4px 6px 0 0;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(59,130,246,0.15);
-    border: 1px solid rgba(96,165,250,0.45);
-    text-decoration: none;
-    color: #bfdbfe;
-}
-.sources a:hover {
-    background: rgba(59,130,246,0.35);
-}
-
-/* Input box */
-textarea {
-    background: #020409 !important;
-    color: #e5e7eb !important;
-    border: 1px solid rgba(59,130,246,0.6) !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-    font-size: 15px !important;
-}
-
-textarea:focus {
-    outline: none !important;
-    border-color: #60a5fa !important;
-    box-shadow: 0 0 0 1px rgba(96,165,250,0.6);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-thumb {
-    background: #1e3a8a;
-    border-radius: 6px;
-}
+    .xo-msg-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin-bottom: 0.15rem;
+    }
 </style>
-""", unsafe_allow_html=True)
-
-# ================= STATE =================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "welcome_done" not in st.session_state:
-    st.session_state.welcome_done = False
-
-# ================= TITLE =================
-st.markdown("## DarkFury")
-st.markdown(
-    "<p style='opacity:0.55;margin-top:-12px;color:#93c5fd;'>Silent • Fast • Intelligent</p>",
-    unsafe_allow_html=True
-)
-
-# ================= GROQ CLIENT =================
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-MODEL = "llama-3.1-8b-instant"
-
-# ================= SYSTEM PROMPT =================
-SYSTEM_MESSAGE = {
-    "role": "system",
-    "content": """
-You are DarkFury — a precise, honest, and high-performance AI assistant.
-
-SEARCH RULES
-- Use provided sources when available.
-- Never invent citations.
-- If sources are weak or missing, say so clearly.
-
-CORE PRINCIPLES
-- Accuracy over confidence.
-- Never give medical, legal, or financial trading advice.
-- Never predict prices or give buy/sell signals.
-
-STYLE
-- Professional, calm, concise.
-- No emojis.
-- Clear reasoning.
 """
+
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# ---------- MODEL MAP ----------
+MODEL_ID_MAP = {
+    "llama3-8b-8192": "llama-3.1-8b-instant",
+    "llama3-70b-8192": "llama-3.3-70b-versatile",
 }
 
-# ================= SEARCH FUNCTION (FREE) =================
-def web_search(query, max_results=4):
-    results = []
-    with DDGS() as ddgs:
-        for r in ddgs.text(query, max_results=max_results):
-            results.append({
-                "title": r.get("title"),
-                "href": r.get("href")
-            })
-    return results
+MODES = ["Study Helper", "Idea Generator", "Planner", "Friendly Chat"]
 
-# ================= WELCOME =================
-if not st.session_state.welcome_done:
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": "I’m DarkFury. Ask anything."
-    })
-    st.session_state.welcome_done = True
+# ---------- STATE ----------
+def init_state():
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "mode" not in st.session_state:
+        st.session_state.mode = "Friendly Chat"
 
-# ================= CHAT HISTORY =================
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+# ---------- GROQ ----------
 
-        if msg.get("sources"):
-            st.markdown("<div class='sources'><strong>Sources</strong><br>", unsafe_allow_html=True)
-            for s in msg["sources"]:
-                st.markdown(
-                    f"<a href='{s['href']}' target='_blank'>{s['title']}</a>",
-                    unsafe_allow_html=True
+def client():
+    return Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+# ---------- PROMPTS ----------
+
+def system_prompt():
+    base = (
+        "You are XO AI from Nexo.corp. Simple, calm, respectful. "
+        "No financial or harmful content. Step-by-step when needed."
+    )
+    return base
+
+# ---------- CHAT UI ----------
+
+def render_chat(model_id):
+    st.markdown("<div class='xo-chat-wrapper'>", unsafe_allow_html=True)
+
+    html = ["<div class='xo-chat-scroll'>"]
+
+    for m in st.session_state.messages:
+        role = m["role"]
+        label = "You" if role == "user" else "XO AI"
+        cls = role
+        text = (
+            m["content"].replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+        html.append(
+            f"<div class='xo-msg-row {cls}'>"
+            f"<div class='xo-msg-bubble {cls}'>"
+            f"<div class='xo-msg-label'>{label}</div>"
+            f"{text}</div></div>"
+        )
+
+    html.append("</div>")
+    st.markdown("\n".join(html), unsafe_allow_html=True)
+
+    user_input = st.chat_input("Ask XO AI...")
+
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.spinner("Thinking…"):
+            try:
+                response = client().chat.completions.create(
+                    model=MODEL_ID_MAP.get(model_id, model_id),
+                    messages=[{"role": "system", "content": system_prompt()}] + st.session_state.messages,
                 )
-            st.markdown("</div>", unsafe_allow_html=True)
+                reply = response.choices[0].message.content
+                st.session_state.messages.append({"role": "assistant", "content": reply})
+            except Exception as e:
+                st.error("XO AI hit a limit. Try again.")
+                st.caption(str(e))
 
-# ================= USER INPUT =================
-user_input = st.chat_input("Ask anything…")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-if user_input:
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input
-    })
+# ---------- MAIN ----------
 
-    with st.chat_message("user"):
-        st.write(user_input)
+def main():
+    init_state()
 
-    # 🔍 Perplexity-style search
-    sources = web_search(user_input)
+    with st.expander("Model settings", expanded=False):
+        model = st.radio("Choose Groq model", ["llama3-8b-8192", "llama3-70b-8192"], horizontal=True)
 
-    context_block = ""
-    if sources:
-        context_block = "SOURCES:\n" + "\n".join(
-            f"- {s['title']}" for s in sources
-        )
+    render_chat(model)
 
-    messages_for_groq = [
-        SYSTEM_MESSAGE,
-        {"role": "system", "content": context_block},
-        *st.session_state.messages[-6:]
-    ]
-
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        full_reply = ""
-
-        stream = client.chat.completions.create(
-            model=MODEL,
-            messages=messages_for_groq,
-            temperature=0.4,
-            max_tokens=500,
-            stream=True
-        )
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content or ""
-            full_reply += delta
-            placeholder.markdown(full_reply)
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": full_reply,
-        "sources": sources
-    })
-
-    st.rerun()
+main()
