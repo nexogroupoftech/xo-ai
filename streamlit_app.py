@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 from groq import Groq
+from duckduckgo_search import DDGS
 
 # ================= PAGE CONFIG =================
 st.set_page_config(
@@ -9,7 +10,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================= LIGHT GROK / APPLE UI =================
+# ================= BLACK NEON BLUE UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -18,13 +19,13 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* Apple-style white background */
+/* Pure black background */
 .stApp {
-    background: linear-gradient(180deg, #f9fafb 0%, #ffffff 60%);
-    color: #111827;
+    background: radial-gradient(circle at top, #050b1a 0%, #020409 60%);
+    color: #e5e7eb;
 }
 
-/* Remove Streamlit header */
+/* Kill Streamlit header */
 header[data-testid="stHeader"] {
     display: none;
 }
@@ -32,7 +33,7 @@ header[data-testid="stHeader"] {
 /* Main width */
 .block-container {
     max-width: 920px;
-    padding-top: 1.5rem;
+    padding-top: 1.2rem;
 }
 
 /* Remove avatars */
@@ -45,52 +46,57 @@ header[data-testid="stHeader"] {
     padding: 0.7rem 0;
 }
 
-/* USER MESSAGE — LIGHT BLUE CARD */
+/* USER — DARK NEON BLUE BOX (RIGHT) */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: #eef4ff;
-    color: #1e3a8a;
+    background: linear-gradient(180deg, #081a3a, #06132b);
+    color: #dbeafe;
     padding: 14px 16px;
     border-radius: 14px;
     max-width: 78%;
     margin-left: auto;
-    border: 1px solid #dbeafe;
+    border: 1px solid rgba(59,130,246,0.45);
+    box-shadow: 0 0 16px rgba(59,130,246,0.15);
 }
 
-/* AI MESSAGE — WHITE GLASS CARD */
+/* AI — NEON BLUE GLASS BOX (LEFT) */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: rgba(255,255,255,0.9);
-    color: #111827;
+    background: linear-gradient(180deg, #0b1f44, #081736);
+    color: #eff6ff;
     padding: 16px 18px;
     border-radius: 16px;
     max-width: 78%;
     margin-right: auto;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(96,165,250,0.55);
+    box-shadow: 0 0 22px rgba(96,165,250,0.22);
 }
 
-/* Sources block (Perplexity-style) */
+/* Perplexity-style sources */
 .sources {
     margin-top: 10px;
     padding-top: 8px;
-    border-top: 1px dashed #e5e7eb;
+    border-top: 1px dashed rgba(96,165,250,0.35);
     font-size: 13px;
-    color: #475569;
+    color: #93c5fd;
 }
-
-.sources span {
+.sources a {
     display: inline-block;
-    margin-right: 8px;
-    padding: 4px 8px;
+    margin: 4px 6px 0 0;
+    padding: 4px 10px;
     border-radius: 999px;
-    background: #f1f5f9;
-    border: 1px solid #e5e7eb;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(96,165,250,0.45);
+    text-decoration: none;
+    color: #bfdbfe;
+}
+.sources a:hover {
+    background: rgba(59,130,246,0.35);
 }
 
 /* Input box */
 textarea {
-    background: #ffffff !important;
-    color: #111827 !important;
-    border: 1px solid #c7d2fe !important;
+    background: #020409 !important;
+    color: #e5e7eb !important;
+    border: 1px solid rgba(59,130,246,0.6) !important;
     border-radius: 14px !important;
     padding: 14px !important;
     font-size: 15px !important;
@@ -98,8 +104,8 @@ textarea {
 
 textarea:focus {
     outline: none !important;
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 1px rgba(99,102,241,0.4);
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 1px rgba(96,165,250,0.6);
 }
 
 /* Scrollbar */
@@ -107,7 +113,7 @@ textarea:focus {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #cbd5f5;
+    background: #1e3a8a;
     border-radius: 6px;
 }
 </style>
@@ -123,7 +129,7 @@ if "welcome_done" not in st.session_state:
 # ================= TITLE =================
 st.markdown("## DarkFury")
 st.markdown(
-    "<p style='opacity:0.6;margin-top:-12px;'>Silent • Fast • Intelligent</p>",
+    "<p style='opacity:0.55;margin-top:-12px;color:#93c5fd;'>Silent • Fast • Intelligent</p>",
     unsafe_allow_html=True
 )
 
@@ -137,27 +143,33 @@ SYSTEM_MESSAGE = {
     "content": """
 You are DarkFury — a precise, honest, and high-performance AI assistant.
 
+SEARCH RULES
+- Use provided sources when available.
+- Never invent citations.
+- If sources are weak or missing, say so clearly.
+
 CORE PRINCIPLES
 - Accuracy over confidence.
-- Never hallucinate facts or sources.
-- If unsure, say so clearly.
 - Never give medical, legal, or financial trading advice.
 - Never predict prices or give buy/sell signals.
-
-SEARCH & SOURCES
-- If external information is referenced, clearly separate it as Sources.
-- Never invent sources.
-- If no sources are available, say so.
 
 STYLE
 - Professional, calm, concise.
 - No emojis.
-- Apple-like clarity.
-
-You are not ChatGPT.
-You are DarkFury.
+- Clear reasoning.
 """
 }
+
+# ================= SEARCH FUNCTION (FREE) =================
+def web_search(query, max_results=4):
+    results = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(query, max_results=max_results):
+            results.append({
+                "title": r.get("title"),
+                "href": r.get("href")
+            })
+    return results
 
 # ================= WELCOME =================
 if not st.session_state.welcome_done:
@@ -172,18 +184,14 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-        # Placeholder Perplexity-style sources (UI only)
-        if msg["role"] == "assistant" and "Sources:" in msg["content"]:
-            st.markdown(
-                """
-                <div class="sources">
-                    <strong>Sources</strong><br>
-                    <span>Wikipedia</span>
-                    <span>Official Docs</span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        if msg.get("sources"):
+            st.markdown("<div class='sources'><strong>Sources</strong><br>", unsafe_allow_html=True)
+            for s in msg["sources"]:
+                st.markdown(
+                    f"<a href='{s['href']}' target='_blank'>{s['title']}</a>",
+                    unsafe_allow_html=True
+                )
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # ================= USER INPUT =================
 user_input = st.chat_input("Ask anything…")
@@ -197,12 +205,19 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    recent_messages = st.session_state.messages[-8:]
+    # 🔍 Perplexity-style search
+    sources = web_search(user_input)
 
-    messages_for_groq = [SYSTEM_MESSAGE] + [
-        {"role": m["role"], "content": m["content"]}
-        for m in recent_messages
-        if m["role"] in ("user", "assistant")
+    context_block = ""
+    if sources:
+        context_block = "SOURCES:\n" + "\n".join(
+            f"- {s['title']}" for s in sources
+        )
+
+    messages_for_groq = [
+        SYSTEM_MESSAGE,
+        {"role": "system", "content": context_block},
+        *st.session_state.messages[-6:]
     ]
 
     with st.chat_message("assistant"):
@@ -224,7 +239,8 @@ if user_input:
 
     st.session_state.messages.append({
         "role": "assistant",
-        "content": full_reply
+        "content": full_reply,
+        "sources": sources
     })
 
     st.rerun()
