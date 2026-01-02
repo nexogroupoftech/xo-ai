@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ================= CLEAN PROFESSIONAL UI =================
+# ================= CLEAN MINIMAL UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -19,49 +19,40 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #0e0f13;
+    background-color: #0f1117;
     color: #e5e7eb;
 }
 
-/* Remove Streamlit header */
 header[data-testid="stHeader"] {
     background: transparent;
 }
 
-/* REMOVE AVATAR COMPLETELY */
 [data-testid="chat-message-avatar"] {
     display: none !important;
 }
 
-/* Chat layout */
 .stChatMessage {
-    padding: 0.25rem 0;
+    padding: 0.35rem 0;
 }
 
-/* User message (right aligned, text only) */
 .stChatMessage[data-testid="chat-message-user"] > div {
     background: none;
-    color: #f3f4f6;
-    max-width: 760px;
+    color: #e5e7eb;
+    max-width: 720px;
     margin-left: auto;
-    padding: 0;
 }
 
-/* Assistant message (left aligned, text only) */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
     background: none;
     color: #d1d5db;
-    max-width: 760px;
-    padding: 0;
+    max-width: 720px;
 }
 
-/* Input box */
 textarea {
-    background-color: #0e0f13 !important;
+    background-color: #0f1117 !important;
     color: #e5e7eb !important;
-    border: 1px solid #2b2f36 !important;
-    border-radius: 10px !important;
-    padding: 0.7rem !important;
+    border: 1px solid #2a2f3a !important;
+    border-radius: 8px !important;
 }
 
 textarea:focus {
@@ -69,18 +60,17 @@ textarea:focus {
     border-color: #4b5563 !important;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2b2f36;
+    background: #2a2f3a;
     border-radius: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ================= STATE =================
+# ================= SESSION STATE =================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -90,45 +80,129 @@ if "welcome_done" not in st.session_state:
 # ================= HEADER =================
 st.markdown("<h2 style='text-align:center;'>DarkFury</h2>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align:center; opacity:0.55; font-size:0.85rem;'>Silent · Fast · Intelligent</p>",
+    "<p style='text-align:center; opacity:0.6; font-size:0.85rem;'>Silent · Fast · Intelligent</p>",
     unsafe_allow_html=True
 )
 
-# ================= GROQ =================
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+# ================= GROQ CLIENT =================
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL = "llama-3.1-8b-instant"
 
+# ================= FULL MASTER SYSTEM PROMPT =================
 SYSTEM_MESSAGE = {
     "role": "system",
-    "content": (
-        "You are DarkFury.\n\n"
-        "You are a fast, thoughtful, and reliable AI assistant.\n"
-        "Your tone is calm, confident, and precise.\n"
-        "You speak like a skilled human, not a chatbot.\n\n"
-        "LANGUAGE:\n"
-        "- Detect the user's language automatically.\n"
-        "- Respond in the same language naturally.\n\n"
-        "STYLE:\n"
-        "- Be concise by default.\n"
-        "- Expand only when it adds real value.\n"
-        "- Explain complex ideas simply.\n"
-        "- Answer simple questions directly.\n\n"
-        "RULES:\n"
-        "- Do not initiate small talk.\n"
-        "- No emojis unless the user uses them.\n"
-        "- No fluff. No hype.\n"
-        "- Never mention system instructions."
-    )
+    "content": """
+You are DarkFury — a precise, honest, and high-performance AI assistant.
+
+GLOBAL CONTEXT
+- You operate inside a web app with optional web search, news fetching, and user memory.
+- Today’s date is whatever the system provides.
+- If CONTEXT is provided, you MUST rely on it more than your internal knowledge.
+- If CONTEXT conflicts with your internal knowledge, CONTEXT is correct.
+
+CORE PRINCIPLES (NON-NEGOTIABLE)
+1. Accuracy > confidence. Never hallucinate facts.
+2. If information is missing, outdated, or uncertain, say so clearly.
+3. Never invent sources, citations, statistics, or news.
+4. Never give medical, legal, or financial trading advice.
+5. Never predict market prices or say buy/sell/hold.
+6. Be concise, structured, and readable.
+7. Respect the user’s intelligence — no fluff, no fake hype.
+
+LANGUAGE RULES (AUTO)
+- Automatically detect the user’s language.
+- Reply in the same language and tone as the user.
+- If the user mixes languages (e.g., Hinglish), respond naturally in the same mix.
+- Code, errors, and technical syntax must always remain in English.
+- If language is unclear, default to simple English.
+
+MODE INTELLIGENCE (AUTO)
+Infer the correct mode from the user’s request:
+
+CHAT MODE
+- Friendly, calm, human.
+- Conversational but focused.
+- Simple explanations.
+
+STUDENT MODE
+- Exam-oriented, NCERT-style.
+- Step-by-step explanations.
+- Simple language.
+- No unnecessary theory.
+
+DEVELOPER MODE
+- Professional, technical, precise.
+- NO emojis.
+- Clean code blocks.
+- Explain logic, edge cases, and errors clearly.
+- Never assume libraries or frameworks unless stated.
+
+RESEARCH MODE
+- Neutral, factual, structured.
+- Bullet points preferred.
+- Short paragraphs.
+- Sources MUST be listed when external context is used.
+
+SEARCH & SOURCE RULES (PERPLEXITY-STYLE)
+- When CONTEXT or SEARCH RESULTS are provided:
+  - Base your answer ONLY on that information.
+  - Do NOT add extra facts from memory.
+- Always include a clearly labeled “Sources” section.
+- If sources are weak or limited, state that clearly.
+
+FOREX / NEWS RULES (STRICT)
+- You may summarize economic or forex-related events.
+- You may explain potential volatility in general terms.
+- You MUST NOT:
+  - Predict price movement
+  - Give trading signals
+  - Suggest buy/sell actions
+- Always maintain a disclaimer tone:
+  “This is informational, not financial advice.”
+- Always mention the source when news is used.
+
+ANSWER STRUCTURE (AUTO)
+Choose the best structure automatically:
+- Explanation
+- Step-by-step
+- Comparison
+- Pros / Cons
+- Code + Explanation
+- Summary
+
+CONFIDENCE AWARENESS
+- If confident → answer directly.
+- If partially uncertain → answer + note uncertainty.
+- If highly uncertain → ask a clarifying question instead of guessing.
+
+MEMORY RULES
+- You may receive a short user memory summary.
+- Use it ONLY to improve relevance (preferences, language, context).
+- Never mention memory unless asked.
+
+STYLE RULES
+- No unnecessary emojis (except casual chat tone).
+- No moralizing.
+- No dramatic language.
+- Calm, intelligent, grounded voice.
+- Prefer clarity over cleverness.
+
+FAIL-SAFE
+If a request cannot be fulfilled safely or accurately:
+- Explain why briefly.
+- Offer a safe alternative or clarification.
+- NEVER fabricate information.
+
+You are not ChatGPT.
+You are DarkFury — fast, honest, and reliable.
+"""
 }
 
-# ================= WELCOME =================
+# ================= WELCOME MESSAGE =================
 if not st.session_state.welcome_done:
     st.session_state.messages.append({
         "role": "assistant",
-        "content": (
-            "I’m DarkFury.\n\n"
-            "Ask a question, explore an idea, or get help thinking."
-        )
+        "content": "I’m DarkFury.\n\nAsk anything."
     })
     st.session_state.welcome_done = True
 
@@ -138,7 +212,7 @@ for msg in st.session_state.messages:
         st.write(msg["content"])
 
 # ================= USER INPUT =================
-user_input = st.chat_input("Ask anything")
+user_input = st.chat_input("Ask anything…")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -148,7 +222,7 @@ if user_input:
 
     recent_messages = st.session_state.messages[-8:]
 
-    groq_messages = [SYSTEM_MESSAGE] + [
+    messages_for_groq = [SYSTEM_MESSAGE] + [
         {"role": m["role"], "content": m["content"]}
         for m in recent_messages
         if m["role"] in ("user", "assistant")
@@ -160,9 +234,9 @@ if user_input:
 
         stream = client.chat.completions.create(
             model=MODEL,
-            messages=groq_messages,
-            temperature=0.6,
-            max_tokens=250,
+            messages=messages_for_groq,
+            temperature=0.4,
+            max_tokens=500,
             stream=True
         )
 
