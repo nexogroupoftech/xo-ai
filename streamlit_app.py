@@ -14,38 +14,50 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+/* ===== RESET EVERYTHING ===== */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* App background */
+/* ===== KILL STREAMLIT HEADER & SPACE ===== */
+header,
+header[data-testid="stHeader"],
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"],
+div[data-testid="stStatusWidget"] {
+    display: none !important;
+    height: 0 !important;
+}
+
+/* ===== REMOVE TOP GAP ===== */
+.block-container {
+    padding-top: 0.6rem !important;
+    margin-top: 0 !important;
+    max-width: 900px;
+}
+
+/* ===== APP BACKGROUND ===== */
 .stApp {
     background: radial-gradient(circle at top, #0b0f19 0%, #05070d 60%);
     color: #e5e7eb;
 }
 
-/* Remove Streamlit header */
-header[data-testid="stHeader"] {
-    display: none;
-}
-
-/* Layout width */
-.block-container {
-    max-width: 900px;
-    padding-top: 1.5rem;
-}
-
-/* Remove avatars */
+/* ===== REMOVE AVATARS ===== */
 [data-testid="chat-message-avatar"] {
     display: none !important;
 }
 
-/* Chat spacing */
+/* ===== CHAT SPACING ===== */
 .stChatMessage {
     padding: 0.45rem 0;
 }
 
-/* USER MESSAGE — NEON BLUE */
+/* ===== USER MESSAGE ===== */
 .stChatMessage[data-testid="chat-message-user"] > div {
     background: rgba(30, 58, 138, 0.18);
     border: 1px solid rgba(59, 130, 246, 0.45);
@@ -58,7 +70,7 @@ header[data-testid="stHeader"] {
     box-shadow: 0 0 18px rgba(59, 130, 246, 0.18);
 }
 
-/* ASSISTANT MESSAGE — SOFT BLUE */
+/* ===== ASSISTANT MESSAGE ===== */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
     background: rgba(15, 23, 42, 0.65);
     border: 1px solid rgba(99, 102, 241, 0.28);
@@ -71,7 +83,7 @@ header[data-testid="stHeader"] {
     box-shadow: 0 0 16px rgba(99, 102, 241, 0.14);
 }
 
-/* Input bar */
+/* ===== INPUT BAR ===== */
 textarea {
     background: rgba(2, 6, 23, 0.95) !important;
     color: #e5e7eb !important;
@@ -87,7 +99,7 @@ textarea:focus {
     box-shadow: 0 0 0 1px #60a5fa;
 }
 
-/* Scrollbar */
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 6px;
 }
