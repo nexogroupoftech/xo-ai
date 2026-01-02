@@ -55,7 +55,7 @@ header[data-testid="stHeader"] { display: none; }
 }
 
 .xo-sources {
-    margin-top:0.4rem;
+    margin-top: 0.4rem;
 }
 
 .xo-source-pill {
@@ -95,7 +95,7 @@ SYSTEM = {
     "role": "system",
     "content": (
         "You are DarkFury — precise and honest. "
-        "Use sources if provided. Never invent citations."
+        "Use provided sources. Never invent citations."
     )
 }
 
@@ -107,29 +107,33 @@ def web_search(query):
     except Exception:
         return []
 
-def confidence_score(srcs):
-    if not srcs:
+def confidence_score(sources):
+    if not sources:
         return 30
-    return min(90, 40 + len(srcs) * 15)
+    return min(90, 40 + len(sources) * 15)
 
-# ================= SOURCES UI =================
+# ================= SOURCES UI (LOGOS ONLY HERE) =================
 def render_sources(sources):
     html = ["<div class='xo-sources'>"]
+
     for s in sources:
         url = s["url"]
         title = s["title"]
         domain = url.split("/")[2]
+
         clearbit = f"https://logo.clearbit.com/{domain}"
         favicon = f"https://www.google.com/s2/favicons?domain={domain}&sz=64"
 
         html.append(
             f"""
             <a class="xo-source-pill" href="{url}" target="_blank">
-                <img src="{clearbit}" onerror="this.src='{favicon}'">
+                <img src="{clearbit}"
+                     onerror="this.onerror=null;this.src='{favicon}';">
                 {title}
             </a>
             """
         )
+
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
@@ -137,6 +141,8 @@ def render_sources(sources):
 def render_chat():
     for m in st.session_state.messages:
         role = m["role"]
+
+        # MESSAGE TEXT (NO LOGOS HERE)
         st.markdown(
             f"<div class='xo-msg-row {role}'>"
             f"<div class='xo-msg-bubble {role}'>"
@@ -145,6 +151,7 @@ def render_chat():
             unsafe_allow_html=True
         )
 
+        # SOURCES (LOGOS ONLY HERE)
         if role == "assistant" and m.get("sources"):
             st.markdown(f"**Confidence:** {m['confidence']}%")
             render_sources(m["sources"])
@@ -159,13 +166,12 @@ if prompt:
 
     sources = web_search(prompt)
     conf = confidence_score(sources)
-
     context = "\n".join(f"- {s['title']}" for s in sources)
 
     reply_text = ""
     placeholder = st.empty()
 
-    # ---- TRY STREAMING ----
+    # STREAM WITH SAFE FALLBACK
     try:
         stream = groq.chat.completions.create(
             model=MODEL,
@@ -189,7 +195,6 @@ if prompt:
                 unsafe_allow_html=True
             )
 
-    # ---- FALLBACK (NO CRASH) ----
     except Exception:
         resp = groq.chat.completions.create(
             model=MODEL,
@@ -204,7 +209,7 @@ if prompt:
 
     st.session_state.messages.append({
         "role": "assistant",
-        "content": reply_text,
+        "content": reply_text,   # TEXT ONLY
         "sources": sources,
         "confidence": conf
     })
