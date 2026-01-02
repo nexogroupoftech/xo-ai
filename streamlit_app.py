@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================= GROK-STYLE UI =================
+# ================= LIGHT GROK / APPLE UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -18,10 +18,10 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* App background */
+/* Apple-style white background */
 .stApp {
-    background: radial-gradient(circle at top, #0a0f1f 0%, #05070d 65%);
-    color: #e5e7eb;
+    background: linear-gradient(180deg, #f9fafb 0%, #ffffff 60%);
+    color: #111827;
 }
 
 /* Remove Streamlit header */
@@ -31,8 +31,8 @@ header[data-testid="stHeader"] {
 
 /* Main width */
 .block-container {
-    max-width: 900px;
-    padding-top: 1.2rem;
+    max-width: 920px;
+    padding-top: 1.5rem;
 }
 
 /* Remove avatars */
@@ -42,38 +42,55 @@ header[data-testid="stHeader"] {
 
 /* Chat spacing */
 .stChatMessage {
-    padding: 0.6rem 0;
+    padding: 0.7rem 0;
 }
 
-/* USER MESSAGE — DARK BLUE CARD */
+/* USER MESSAGE — LIGHT BLUE CARD */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: linear-gradient(180deg, #0b1226, #0a1022);
-    color: #e5e7eb;
+    background: #eef4ff;
+    color: #1e3a8a;
     padding: 14px 16px;
     border-radius: 14px;
-    max-width: 76%;
+    max-width: 78%;
     margin-left: auto;
-    border: 1px solid rgba(59,130,246,0.35);
-    box-shadow: 0 0 0 1px rgba(59,130,246,0.15);
+    border: 1px solid #dbeafe;
 }
 
-/* AI MESSAGE — BLUE GLASS CARD */
+/* AI MESSAGE — WHITE GLASS CARD */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: linear-gradient(180deg, #0e1a3a, #0b1530);
-    color: #dbeafe;
+    background: rgba(255,255,255,0.9);
+    color: #111827;
     padding: 16px 18px;
-    border-radius: 14px;
-    max-width: 76%;
+    border-radius: 16px;
+    max-width: 78%;
     margin-right: auto;
-    border: 1px solid rgba(96,165,250,0.45);
-    box-shadow: 0 0 18px rgba(96,165,250,0.12);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+
+/* Sources block (Perplexity-style) */
+.sources {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #e5e7eb;
+    font-size: 13px;
+    color: #475569;
+}
+
+.sources span {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #e5e7eb;
 }
 
 /* Input box */
 textarea {
-    background: #05070d !important;
-    color: #e5e7eb !important;
-    border: 1px solid rgba(59,130,246,0.6) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #c7d2fe !important;
     border-radius: 14px !important;
     padding: 14px !important;
     font-size: 15px !important;
@@ -81,8 +98,8 @@ textarea {
 
 textarea:focus {
     outline: none !important;
-    border-color: #60a5fa !important;
-    box-shadow: 0 0 0 1px rgba(96,165,250,0.6);
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.4);
 }
 
 /* Scrollbar */
@@ -90,7 +107,7 @@ textarea:focus {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #cbd5f5;
     border-radius: 6px;
 }
 </style>
@@ -106,7 +123,7 @@ if "welcome_done" not in st.session_state:
 # ================= TITLE =================
 st.markdown("## DarkFury")
 st.markdown(
-    "<p style='opacity:0.55;margin-top:-12px;'>Silent • Fast • Intelligent</p>",
+    "<p style='opacity:0.6;margin-top:-12px;'>Silent • Fast • Intelligent</p>",
     unsafe_allow_html=True
 )
 
@@ -123,14 +140,19 @@ You are DarkFury — a precise, honest, and high-performance AI assistant.
 CORE PRINCIPLES
 - Accuracy over confidence.
 - Never hallucinate facts or sources.
+- If unsure, say so clearly.
 - Never give medical, legal, or financial trading advice.
 - Never predict prices or give buy/sell signals.
-- If unsure, say so clearly.
+
+SEARCH & SOURCES
+- If external information is referenced, clearly separate it as Sources.
+- Never invent sources.
+- If no sources are available, say so.
 
 STYLE
 - Professional, calm, concise.
 - No emojis.
-- Clear reasoning.
+- Apple-like clarity.
 
 You are not ChatGPT.
 You are DarkFury.
@@ -149,6 +171,19 @@ if not st.session_state.welcome_done:
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
+
+        # Placeholder Perplexity-style sources (UI only)
+        if msg["role"] == "assistant" and "Sources:" in msg["content"]:
+            st.markdown(
+                """
+                <div class="sources">
+                    <strong>Sources</strong><br>
+                    <span>Wikipedia</span>
+                    <span>Official Docs</span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 # ================= USER INPUT =================
 user_input = st.chat_input("Ask anything…")
