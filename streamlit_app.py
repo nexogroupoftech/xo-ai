@@ -6,10 +6,10 @@ from groq import Groq
 st.set_page_config(
     page_title="DarkFury",
     page_icon="🧠",
-    layout="wide"
+    layout="centered"
 )
 
-# ================= CLEAN MINIMAL UI =================
+# ================= MODERN DARK UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -18,191 +18,132 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
+/* App background */
 .stApp {
-    background-color: #0f1117;
+    background: radial-gradient(circle at top, #0b0f19 0%, #05070d 60%);
     color: #e5e7eb;
 }
 
+/* Remove Streamlit header */
 header[data-testid="stHeader"] {
-    background: transparent;
+    display: none;
 }
 
+/* Chat container */
+.block-container {
+    max-width: 900px;
+    padding-top: 2rem;
+}
+
+/* Remove avatars */
 [data-testid="chat-message-avatar"] {
     display: none !important;
 }
 
+/* Chat messages */
 .stChatMessage {
-    padding: 0.35rem 0;
+    padding: 0.4rem 0;
 }
 
+/* User bubble */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: none;
-    color: #e5e7eb;
-    max-width: 720px;
+    background: linear-gradient(135deg, #1f2933, #111827);
+    border-radius: 12px;
+    padding: 12px 14px;
+    max-width: 75%;
     margin-left: auto;
+    color: #e5e7eb;
 }
 
+/* Assistant bubble */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: none;
-    color: #d1d5db;
-    max-width: 720px;
+    background: linear-gradient(135deg, #0b1220, #020617);
+    border-radius: 12px;
+    padding: 12px 14px;
+    max-width: 75%;
+    margin-right: auto;
+    color: #cbd5f5;
+    border: 1px solid rgba(99,102,241,0.25);
 }
 
+/* Input bar */
 textarea {
-    background-color: #0f1117 !important;
+    background: #020617 !important;
     color: #e5e7eb !important;
-    border: 1px solid #2a2f3a !important;
-    border-radius: 8px !important;
+    border: 1px solid rgba(99,102,241,0.6) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    font-size: 15px !important;
 }
 
 textarea:focus {
     outline: none !important;
-    border-color: #4b5563 !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 1px #6366f1;
 }
 
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2a2f3a;
+    background: #1e293b;
     border-radius: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ================= SESSION STATE =================
+# ================= TOP BAR =================
+st.markdown(
+    """
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div style="font-size:1.4rem;font-weight:600;">DarkFury</div>
+        <div style="opacity:0.5;font-size:0.85rem;">Silent · Fast · Intelligent</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ================= SESSION =================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "welcome_done" not in st.session_state:
     st.session_state.welcome_done = False
 
-# ================= HEADER =================
-st.markdown("<h2 style='text-align:center;'>DarkFury</h2>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='text-align:center; opacity:0.6; font-size:0.85rem;'>Silent · Fast · Intelligent</p>",
-    unsafe_allow_html=True
-)
-
-# ================= GROQ CLIENT =================
+# ================= GROQ =================
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL = "llama-3.1-8b-instant"
 
-# ================= FULL MASTER SYSTEM PROMPT =================
+# ================= FULL MASTER PROMPT =================
 SYSTEM_MESSAGE = {
     "role": "system",
     "content": """
 You are DarkFury — a precise, honest, and high-performance AI assistant.
 
-GLOBAL CONTEXT
-- You operate inside a web app with optional web search, news fetching, and user memory.
-- Today’s date is whatever the system provides.
-- If CONTEXT is provided, you MUST rely on it more than your internal knowledge.
-- If CONTEXT conflicts with your internal knowledge, CONTEXT is correct.
+RULES
+- Accuracy over confidence.
+- Never hallucinate facts or sources.
+- Never give medical, legal, or financial trading advice.
+- Never predict prices or give buy/sell signals.
+- If unsure, say so clearly.
 
-CORE PRINCIPLES (NON-NEGOTIABLE)
-1. Accuracy > confidence. Never hallucinate facts.
-2. If information is missing, outdated, or uncertain, say so clearly.
-3. Never invent sources, citations, statistics, or news.
-4. Never give medical, legal, or financial trading advice.
-5. Never predict market prices or say buy/sell/hold.
-6. Be concise, structured, and readable.
-7. Respect the user’s intelligence — no fluff, no fake hype.
-
-LANGUAGE RULES (AUTO)
-- Automatically detect the user’s language.
-- Reply in the same language and tone as the user.
-- If the user mixes languages (e.g., Hinglish), respond naturally in the same mix.
-- Code, errors, and technical syntax must always remain in English.
-- If language is unclear, default to simple English.
-
-MODE INTELLIGENCE (AUTO)
-Infer the correct mode from the user’s request:
-
-CHAT MODE
-- Friendly, calm, human.
-- Conversational but focused.
-- Simple explanations.
-
-STUDENT MODE
-- Exam-oriented, NCERT-style.
-- Step-by-step explanations.
-- Simple language.
-- No unnecessary theory.
-
-DEVELOPER MODE
-- Professional, technical, precise.
-- NO emojis.
-- Clean code blocks.
-- Explain logic, edge cases, and errors clearly.
-- Never assume libraries or frameworks unless stated.
-
-RESEARCH MODE
-- Neutral, factual, structured.
-- Bullet points preferred.
-- Short paragraphs.
-- Sources MUST be listed when external context is used.
-
-SEARCH & SOURCE RULES (PERPLEXITY-STYLE)
-- When CONTEXT or SEARCH RESULTS are provided:
-  - Base your answer ONLY on that information.
-  - Do NOT add extra facts from memory.
-- Always include a clearly labeled “Sources” section.
-- If sources are weak or limited, state that clearly.
-
-FOREX / NEWS RULES (STRICT)
-- You may summarize economic or forex-related events.
-- You may explain potential volatility in general terms.
-- You MUST NOT:
-  - Predict price movement
-  - Give trading signals
-  - Suggest buy/sell actions
-- Always maintain a disclaimer tone:
-  “This is informational, not financial advice.”
-- Always mention the source when news is used.
-
-ANSWER STRUCTURE (AUTO)
-Choose the best structure automatically:
-- Explanation
-- Step-by-step
-- Comparison
-- Pros / Cons
-- Code + Explanation
-- Summary
-
-CONFIDENCE AWARENESS
-- If confident → answer directly.
-- If partially uncertain → answer + note uncertainty.
-- If highly uncertain → ask a clarifying question instead of guessing.
-
-MEMORY RULES
-- You may receive a short user memory summary.
-- Use it ONLY to improve relevance (preferences, language, context).
-- Never mention memory unless asked.
-
-STYLE RULES
-- No unnecessary emojis (except casual chat tone).
-- No moralizing.
-- No dramatic language.
-- Calm, intelligent, grounded voice.
-- Prefer clarity over cleverness.
-
-FAIL-SAFE
-If a request cannot be fulfilled safely or accurately:
-- Explain why briefly.
-- Offer a safe alternative or clarification.
-- NEVER fabricate information.
+STYLE
+- Calm, structured, professional.
+- No emojis.
+- Clear reasoning.
+- Ask clarifying questions instead of guessing.
 
 You are not ChatGPT.
-You are DarkFury — fast, honest, and reliable.
+You are DarkFury.
 """
 }
 
-# ================= WELCOME MESSAGE =================
+# ================= WELCOME =================
 if not st.session_state.welcome_done:
     st.session_state.messages.append({
         "role": "assistant",
-        "content": "I’m DarkFury.\n\nAsk anything."
+        "content": "I’m DarkFury. Ask anything."
     })
     st.session_state.welcome_done = True
 
@@ -211,7 +152,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ================= USER INPUT =================
+# ================= INPUT =================
 user_input = st.chat_input("Ask anything…")
 
 if user_input:
@@ -220,12 +161,11 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    recent_messages = st.session_state.messages[-8:]
+    recent = st.session_state.messages[-8:]
 
-    messages_for_groq = [SYSTEM_MESSAGE] + [
+    messages = [SYSTEM_MESSAGE] + [
         {"role": m["role"], "content": m["content"]}
-        for m in recent_messages
-        if m["role"] in ("user", "assistant")
+        for m in recent
     ]
 
     with st.chat_message("assistant"):
@@ -234,9 +174,9 @@ if user_input:
 
         stream = client.chat.completions.create(
             model=MODEL,
-            messages=messages_for_groq,
+            messages=messages,
             temperature=0.4,
-            max_tokens=500,
+            max_tokens=450,
             stream=True
         )
 
