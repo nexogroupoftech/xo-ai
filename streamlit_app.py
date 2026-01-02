@@ -12,13 +12,14 @@ st.set_page_config(
 # ================= MODERN DARK UI =================
 st.markdown("""
 <style>
+/* ===== GLOBAL FONT ===== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* App background */
+/* ===== APP BACKGROUND ===== */
 .stApp {
     background: radial-gradient(circle at top, #0b0f19 0%, #05070d 60%);
     color: #e5e7eb;
@@ -29,60 +30,77 @@ header[data-testid="stHeader"] {
     display: none;
 }
 
-/* Chat container */
-.block-container {
-    max-width: 900px;
-    padding-top: 2rem;
-}
-
 /* Remove avatars */
 [data-testid="chat-message-avatar"] {
     display: none !important;
 }
 
-/* Chat messages */
+/* ===== CHAT WRAPPER ===== */
+.block-container {
+    max-width: 900px;
+    padding-top: 1.5rem;
+}
+
+/* ===== COMMON MESSAGE STYLE ===== */
 .stChatMessage {
     padding: 0.4rem 0;
 }
 
-/* User bubble */
+/* ===== USER MESSAGE (NEON BLUE GLASS) ===== */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: linear-gradient(135deg, #1f2933, #111827);
-    border-radius: 12px;
+    background: rgba(30, 58, 138, 0.15); /* blue glass */
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 14px;
     padding: 12px 14px;
-    max-width: 75%;
+    max-width: 72%;
     margin-left: auto;
     color: #e5e7eb;
+    backdrop-filter: blur(12px);
+    box-shadow:
+        0 0 0 transparent,
+        0 0 18px rgba(59, 130, 246, 0.15);
+    transition: all 0.25s ease;
 }
 
-/* Assistant bubble */
+/* ===== ASSISTANT MESSAGE (SOFTER NEON) ===== */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: linear-gradient(135deg, #0b1220, #020617);
-    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 14px;
     padding: 12px 14px;
-    max-width: 75%;
+    max-width: 72%;
     margin-right: auto;
-    color: #cbd5f5;
-    border: 1px solid rgba(99,102,241,0.25);
+    color: #c7d2fe;
+    backdrop-filter: blur(14px);
+    box-shadow:
+        0 0 0 transparent,
+        0 0 16px rgba(99, 102, 241, 0.12);
+    transition: all 0.25s ease;
 }
 
-/* Input bar */
+/* ===== HOVER FADE EFFECT (DISAPPEAR FEEL) ===== */
+.stChatMessage > div:hover {
+    opacity: 0.88;
+}
+
+/* ===== INPUT BAR ===== */
 textarea {
-    background: #020617 !important;
+    background: rgba(2, 6, 23, 0.9) !important;
     color: #e5e7eb !important;
-    border: 1px solid rgba(99,102,241,0.6) !important;
-    border-radius: 14px !important;
+    border: 1px solid rgba(59, 130, 246, 0.6) !important;
+    border-radius: 16px !important;
     padding: 14px !important;
     font-size: 15px !important;
+    backdrop-filter: blur(10px);
 }
 
 textarea:focus {
     outline: none !important;
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 1px #6366f1;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 1px #60a5fa;
 }
 
-/* Scrollbar */
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -90,8 +108,6 @@ textarea:focus {
     background: #1e293b;
     border-radius: 6px;
 }
-</style>
-""", unsafe_allow_html=True)
 
 # ================= TOP BAR =================
 st.markdown(
