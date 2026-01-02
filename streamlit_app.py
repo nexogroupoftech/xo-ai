@@ -9,17 +9,16 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================= MODERN DARK UI =================
+# ================= NEON BLUE GLASS UI =================
 st.markdown("""
 <style>
-/* ===== GLOBAL FONT ===== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* ===== APP BACKGROUND ===== */
+/* App background */
 .stApp {
     background: radial-gradient(circle at top, #0b0f19 0%, #05070d 60%);
     color: #e5e7eb;
@@ -30,68 +29,56 @@ header[data-testid="stHeader"] {
     display: none;
 }
 
-/* Remove avatars */
-[data-testid="chat-message-avatar"] {
-    display: none !important;
-}
-
-/* ===== CHAT WRAPPER ===== */
+/* Layout width */
 .block-container {
     max-width: 900px;
     padding-top: 1.5rem;
 }
 
-/* ===== COMMON MESSAGE STYLE ===== */
-.stChatMessage {
-    padding: 0.4rem 0;
+/* Remove avatars */
+[data-testid="chat-message-avatar"] {
+    display: none !important;
 }
 
-/* ===== USER MESSAGE (NEON BLUE GLASS) ===== */
+/* Chat spacing */
+.stChatMessage {
+    padding: 0.45rem 0;
+}
+
+/* USER MESSAGE — NEON BLUE */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: rgba(30, 58, 138, 0.15); /* blue glass */
-    border: 1px solid rgba(59, 130, 246, 0.35);
-    border-radius: 14px;
-    padding: 12px 14px;
+    background: rgba(30, 58, 138, 0.18);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    border-radius: 16px;
+    padding: 14px 16px;
     max-width: 72%;
     margin-left: auto;
     color: #e5e7eb;
     backdrop-filter: blur(12px);
-    box-shadow:
-        0 0 0 transparent,
-        0 0 18px rgba(59, 130, 246, 0.15);
-    transition: all 0.25s ease;
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.18);
 }
 
-/* ===== ASSISTANT MESSAGE (SOFTER NEON) ===== */
+/* ASSISTANT MESSAGE — SOFT BLUE */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid rgba(99, 102, 241, 0.25);
-    border-radius: 14px;
-    padding: 12px 14px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 16px;
+    padding: 14px 16px;
     max-width: 72%;
     margin-right: auto;
     color: #c7d2fe;
     backdrop-filter: blur(14px);
-    box-shadow:
-        0 0 0 transparent,
-        0 0 16px rgba(99, 102, 241, 0.12);
-    transition: all 0.25s ease;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.14);
 }
 
-/* ===== HOVER FADE EFFECT (DISAPPEAR FEEL) ===== */
-.stChatMessage > div:hover {
-    opacity: 0.88;
-}
-
-/* ===== INPUT BAR ===== */
+/* Input bar */
 textarea {
-    background: rgba(2, 6, 23, 0.9) !important;
+    background: rgba(2, 6, 23, 0.95) !important;
     color: #e5e7eb !important;
     border: 1px solid rgba(59, 130, 246, 0.6) !important;
-    border-radius: 16px !important;
+    border-radius: 18px !important;
     padding: 14px !important;
     font-size: 15px !important;
-    backdrop-filter: blur(10px);
 }
 
 textarea:focus {
@@ -100,7 +87,7 @@ textarea:focus {
     box-shadow: 0 0 0 1px #60a5fa;
 }
 
-/* ===== SCROLLBAR ===== */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -108,26 +95,28 @@ textarea:focus {
     background: #1e293b;
     border-radius: 6px;
 }
+</style>
+""", unsafe_allow_html=True)
 
 # ================= TOP BAR =================
 st.markdown(
     """
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <div style="font-size:1.4rem;font-weight:600;">DarkFury</div>
-        <div style="opacity:0.5;font-size:0.85rem;">Silent · Fast · Intelligent</div>
+        <div style="opacity:0.5;font-size:0.85rem;">Silent - Fast - Intelligent</div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# ================= SESSION =================
+# ================= SESSION STATE =================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "welcome_done" not in st.session_state:
     st.session_state.welcome_done = False
 
-# ================= GROQ =================
+# ================= GROQ CLIENT =================
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL = "llama-3.1-8b-instant"
 
@@ -137,7 +126,7 @@ SYSTEM_MESSAGE = {
     "content": """
 You are DarkFury — a precise, honest, and high-performance AI assistant.
 
-RULES
+CORE RULES
 - Accuracy over confidence.
 - Never hallucinate facts or sources.
 - Never give medical, legal, or financial trading advice.
@@ -155,7 +144,7 @@ You are DarkFury.
 """
 }
 
-# ================= WELCOME =================
+# ================= WELCOME MESSAGE =================
 if not st.session_state.welcome_done:
     st.session_state.messages.append({
         "role": "assistant",
@@ -168,7 +157,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ================= INPUT =================
+# ================= USER INPUT =================
 user_input = st.chat_input("Ask anything…")
 
 if user_input:
@@ -177,11 +166,11 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    recent = st.session_state.messages[-8:]
+    recent_messages = st.session_state.messages[-8:]
 
-    messages = [SYSTEM_MESSAGE] + [
+    messages_for_groq = [SYSTEM_MESSAGE] + [
         {"role": m["role"], "content": m["content"]}
-        for m in recent
+        for m in recent_messages
     ]
 
     with st.chat_message("assistant"):
@@ -190,7 +179,7 @@ if user_input:
 
         stream = client.chat.completions.create(
             model=MODEL,
-            messages=messages,
+            messages=messages_for_groq,
             temperature=0.4,
             max_tokens=450,
             stream=True
