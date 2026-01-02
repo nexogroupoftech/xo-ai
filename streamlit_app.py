@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================= NEW MODERN UI =================
+# ================= GROK-STYLE UI =================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -20,7 +20,7 @@ html, body, [class*="css"] {
 
 /* App background */
 .stApp {
-    background-color: #0b0d12;
+    background: radial-gradient(circle at top, #0a0f1f 0%, #05070d 65%);
     color: #e5e7eb;
 }
 
@@ -31,7 +31,7 @@ header[data-testid="stHeader"] {
 
 /* Main width */
 .block-container {
-    max-width: 860px;
+    max-width: 900px;
     padding-top: 1.2rem;
 }
 
@@ -45,40 +45,44 @@ header[data-testid="stHeader"] {
     padding: 0.6rem 0;
 }
 
-/* USER MESSAGE */
+/* USER MESSAGE — DARK BLUE CARD */
 .stChatMessage[data-testid="chat-message-user"] > div {
-    background: #1c1f26;
+    background: linear-gradient(180deg, #0b1226, #0a1022);
     color: #e5e7eb;
     padding: 14px 16px;
     border-radius: 14px;
-    max-width: 78%;
+    max-width: 76%;
     margin-left: auto;
-    box-shadow: inset 0 0 0 1px #2a2f3a;
+    border: 1px solid rgba(59,130,246,0.35);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.15);
 }
 
-/* AI MESSAGE */
+/* AI MESSAGE — BLUE GLASS CARD */
 .stChatMessage[data-testid="chat-message-assistant"] > div {
-    background: #12151c;
-    color: #d1d5db;
-    padding: 14px 16px;
+    background: linear-gradient(180deg, #0e1a3a, #0b1530);
+    color: #dbeafe;
+    padding: 16px 18px;
     border-radius: 14px;
-    max-width: 78%;
+    max-width: 76%;
     margin-right: auto;
-    box-shadow: inset 0 0 0 1px #1f2430;
+    border: 1px solid rgba(96,165,250,0.45);
+    box-shadow: 0 0 18px rgba(96,165,250,0.12);
 }
 
-/* Input */
+/* Input box */
 textarea {
-    background-color: #0b0d12 !important;
+    background: #05070d !important;
     color: #e5e7eb !important;
-    border: 1px solid #2a2f3a !important;
-    border-radius: 12px !important;
+    border: 1px solid rgba(59,130,246,0.6) !important;
+    border-radius: 14px !important;
     padding: 14px !important;
+    font-size: 15px !important;
 }
 
 textarea:focus {
     outline: none !important;
-    border-color: #4f46e5 !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 1px rgba(96,165,250,0.6);
 }
 
 /* Scrollbar */
@@ -86,7 +90,7 @@ textarea:focus {
     width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2a2f3a;
+    background: #1e293b;
     border-radius: 6px;
 }
 </style>
@@ -102,7 +106,7 @@ if "welcome_done" not in st.session_state:
 # ================= TITLE =================
 st.markdown("## DarkFury")
 st.markdown(
-    "<p style='opacity:0.5;margin-top:-12px;'>Silent • Fast • Intelligent</p>",
+    "<p style='opacity:0.55;margin-top:-12px;'>Silent • Fast • Intelligent</p>",
     unsafe_allow_html=True
 )
 
@@ -124,7 +128,7 @@ CORE PRINCIPLES
 - If unsure, say so clearly.
 
 STYLE
-- Calm, professional, concise.
+- Professional, calm, concise.
 - No emojis.
 - Clear reasoning.
 
@@ -146,7 +150,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ================= INPUT =================
+# ================= USER INPUT =================
 user_input = st.chat_input("Ask anything…")
 
 if user_input:
@@ -158,11 +162,12 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    recent = st.session_state.messages[-8:]
+    recent_messages = st.session_state.messages[-8:]
 
     messages_for_groq = [SYSTEM_MESSAGE] + [
         {"role": m["role"], "content": m["content"]}
-        for m in recent
+        for m in recent_messages
+        if m["role"] in ("user", "assistant")
     ]
 
     with st.chat_message("assistant"):
