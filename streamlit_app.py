@@ -6,13 +6,13 @@ from tavily import TavilyClient
 
 # ================= PAGE CONFIG =================
 st.set_page_config(
-    page_title="DarkFury Pro",
+    page_title="DarkFury",
     page_icon="🤖",
     layout="wide"
 )
 
 # ================= UI =================
-CUSTOM_CSS = """
+st.markdown("""
 <style>
 .stApp {
     background: radial-gradient(circle at top left, #151b2b 0%, #050816 40%, #02010a 100%);
@@ -25,7 +25,7 @@ header[data-testid="stHeader"] { display: none; }
     padding-top: 1.5rem;
 }
 
-.xo-msg-row { display:flex; margin-bottom:0.45rem; }
+.xo-msg-row { display:flex; margin-bottom:0.5rem; }
 .xo-msg-row.user { justify-content:flex-end; }
 .xo-msg-row.assistant { justify-content:flex-start; }
 
@@ -34,6 +34,7 @@ header[data-testid="stHeader"] { display: none; }
     padding:0.65rem 0.85rem;
     border-radius:0.9rem;
     font-size:0.9rem;
+    line-height:1.5;
 }
 
 .xo-msg-bubble.user {
@@ -50,154 +51,162 @@ header[data-testid="stHeader"] { display: none; }
     font-size:0.65rem;
     letter-spacing:0.08em;
     color:#9ca3af;
-    margin-bottom:0.15rem;
+    margin-bottom:0.2rem;
 }
 
 .xo-sources {
     margin-top:0.4rem;
-    font-size:0.75rem;
-    color:#93c5fd;
 }
 
-.xo-sources a {
-    display:inline-block;
+.xo-source-pill {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
     margin-right:6px;
-    padding:2px 8px;
+    margin-top:6px;
     border-radius:999px;
+    background: rgba(59,130,246,0.15);
     border:1px solid rgba(59,130,246,0.6);
-    background:rgba(59,130,246,0.15);
-    text-decoration:none;
+    font-size:0.75rem;
     color:#bfdbfe;
+    text-decoration:none;
+}
+
+.xo-source-pill img {
+    width:16px;
+    height:16px;
+    border-radius:4px;
 }
 </style>
-"""
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-
-# ================= AUTH =================
-if "user" not in st.session_state:
-    with st.form("login"):
-        st.subheader("Login to DarkFury")
-        email = st.text_input("Email")
-        submit = st.form_submit_button("Continue")
-        if submit and email:
-            st.session_state.user = email
-            st.session_state.messages = []
-            st.rerun()
-    st.stop()
+""", unsafe_allow_html=True)
 
 # ================= STATE =================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "show_sources" not in st.session_state:
-    st.session_state.show_sources = True
-
-# ================= TITLE =================
-st.markdown("## DarkFury Pro")
-st.caption(f"Logged in as {st.session_state.user}")
-
-with st.expander("⚙️ Settings", expanded=False):
-    st.session_state.show_sources = st.toggle("Show sources", True)
-
 # ================= CLIENTS =================
-groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
-tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+tavily = TavilyClient(api_key=os.environ.get("TAVILY_API_KEY"))
 
 MODEL = "llama-3.1-8b-instant"
 
-SYSTEM_MESSAGE = {
+SYSTEM = {
     "role": "system",
-    "content": """
-You are DarkFury — a precise, honest AI assistant.
-Use provided sources when available.
-Never invent citations.
-If sources are weak, say so clearly.
-"""
+    "content": (
+        "You are DarkFury — precise and honest. "
+        "Use sources if provided. Never invent citations."
+    )
 }
 
 # ================= SEARCH =================
 def web_search(query):
-    result = tavily.search(query=query, max_results=4)
-    return result.get("results", [])
+    try:
+        res = tavily.search(query=query, max_results=4)
+        return res.get("results", [])
+    except Exception:
+        return []
 
-def confidence_score(sources):
-    if not sources:
+def confidence_score(srcs):
+    if not srcs:
         return 30
-    score = min(90, 40 + len(sources) * 15)
-    return score
+    return min(90, 40 + len(srcs) * 15)
 
-# ================= CHAT UI =================
+# ================= SOURCES UI =================
+def render_sources(sources):
+    html = ["<div class='xo-sources'>"]
+    for s in sources:
+        url = s["url"]
+        title = s["title"]
+        domain = url.split("/")[2]
+        clearbit = f"https://logo.clearbit.com/{domain}"
+        favicon = f"https://www.google.com/s2/favicons?domain={domain}&sz=64"
+
+        html.append(
+            f"""
+            <a class="xo-source-pill" href="{url}" target="_blank">
+                <img src="{clearbit}" onerror="this.src='{favicon}'">
+                {title}
+            </a>
+            """
+        )
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+# ================= CHAT RENDER =================
 def render_chat():
     for m in st.session_state.messages:
         role = m["role"]
-        label = "You" if role == "user" else "DarkFury"
-
         st.markdown(
             f"<div class='xo-msg-row {role}'>"
             f"<div class='xo-msg-bubble {role}'>"
-            f"<div class='xo-msg-label'>{label}</div>"
+            f"<div class='xo-msg-label'>{'You' if role=='user' else 'DarkFury'}</div>"
             f"{m['content']}</div></div>",
             unsafe_allow_html=True
         )
 
-        if role == "assistant" and st.session_state.show_sources:
-            sources = m.get("sources", [])
-            confidence = m.get("confidence")
-
-            if sources:
-                st.markdown(f"**Confidence:** {confidence}%", unsafe_allow_html=True)
-                st.markdown("<div class='xo-sources'>", unsafe_allow_html=True)
-                for s in sources:
-                    st.markdown(
-                        f"<a href='{s['url']}' target='_blank'>{s['title']}</a>",
-                        unsafe_allow_html=True
-                    )
-                st.markdown("</div>", unsafe_allow_html=True)
+        if role == "assistant" and m.get("sources"):
+            st.markdown(f"**Confidence:** {m['confidence']}%")
+            render_sources(m["sources"])
 
 render_chat()
 
 # ================= INPUT =================
-user_input = st.chat_input("Ask anything…")
+prompt = st.chat_input("Ask anything…")
 
-if user_input:
-    st.session_state.messages.append({"role":"user","content":user_input})
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Search first
-    sources = web_search(user_input)
-    confidence = confidence_score(sources)
+    sources = web_search(prompt)
+    conf = confidence_score(sources)
 
     context = "\n".join(f"- {s['title']}" for s in sources)
 
+    reply_text = ""
     placeholder = st.empty()
-    streamed = ""
 
-    stream = groq.chat.completions.create(
-        model=MODEL,
-        messages=[
-            SYSTEM_MESSAGE,
-            {"role":"system","content":f"SOURCES:\n{context}"},
-            *st.session_state.messages
-        ],
-        stream=True
-    )
-
-    for chunk in stream:
-        delta = chunk.choices[0].delta.content or ""
-        streamed += delta
-        placeholder.markdown(
-            f"<div class='xo-msg-row assistant'>"
-            f"<div class='xo-msg-bubble assistant'>"
-            f"<div class='xo-msg-label'>DarkFury</div>"
-            f"{streamed}</div></div>",
-            unsafe_allow_html=True
+    # ---- TRY STREAMING ----
+    try:
+        stream = groq.chat.completions.create(
+            model=MODEL,
+            messages=[
+                SYSTEM,
+                {"role": "system", "content": f"SOURCES:\n{context}"},
+                *st.session_state.messages
+            ],
+            stream=True,
+            max_tokens=500,
         )
-        time.sleep(0.01)
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content or ""
+            reply_text += delta
+            placeholder.markdown(
+                f"<div class='xo-msg-row assistant'>"
+                f"<div class='xo-msg-bubble assistant'>"
+                f"<div class='xo-msg-label'>DarkFury</div>"
+                f"{reply_text}</div></div>",
+                unsafe_allow_html=True
+            )
+
+    # ---- FALLBACK (NO CRASH) ----
+    except Exception:
+        resp = groq.chat.completions.create(
+            model=MODEL,
+            messages=[
+                SYSTEM,
+                {"role": "system", "content": f"SOURCES:\n{context}"},
+                *st.session_state.messages
+            ],
+            max_tokens=500,
+        )
+        reply_text = resp.choices[0].message.content
 
     st.session_state.messages.append({
-        "role":"assistant",
-        "content":streamed,
-        "sources":sources,
-        "confidence":confidence
+        "role": "assistant",
+        "content": reply_text,
+        "sources": sources,
+        "confidence": conf
     })
 
     st.rerun()
