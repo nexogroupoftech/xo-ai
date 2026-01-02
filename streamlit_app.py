@@ -30,6 +30,7 @@ html, body, [class*="css"] {
     padding-top: 52px;
 }
 
+/* Hide Streamlit header */
 header { display: none; }
 
 /* Fixed top-left app name */
@@ -56,13 +57,14 @@ header { display: none; }
     box-shadow: 0 0 8px rgba(59,130,246,0.9);
 }
 
-/* Chat */
+/* Chat container */
 .chat {
     max-width: 900px;
     margin: auto;
     padding-top: 2rem;
 }
 
+/* Message rows */
 .row {
     display: flex;
     margin-bottom: 0.8rem;
@@ -71,6 +73,7 @@ header { display: none; }
 .row.user { justify-content: flex-end; }
 .row.ai { justify-content: flex-start; }
 
+/* Chat bubbles */
 .bubble {
     max-width: 75%;
     padding: 0.8rem 1rem;
@@ -80,11 +83,13 @@ header { display: none; }
     white-space: pre-wrap;
 }
 
+/* User bubble */
 .bubble.user {
     background: rgba(59,130,246,0.25);
     border: 1px solid rgba(59,130,246,0.7);
 }
 
+/* AI bubble */
 .bubble.ai {
     background: rgba(15,23,42,0.95);
     border: 1px solid rgba(148,163,184,0.25);
@@ -92,7 +97,7 @@ header { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# ================= HEADER =================
+# ================= TOP LEFT HEADER =================
 st.markdown("""
 <div class="df-header">
     <div class="df-dot"></div>
@@ -134,6 +139,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 user_input = st.chat_input("Ask anything...")
 
 if user_input:
+    # Detect emoji usage
     st.session_state.user_emoji_mode = user_used_emoji(user_input)
 
     st.session_state.messages.append({
@@ -151,12 +157,8 @@ if user_input:
     SYSTEM_PROMPT = {
         "role": "system",
         "content": (
-            "You are DarkFury, an AI assistant created by **NexoCorp**, "
-            "a technology group founded by **Dev Kumar**.\n\n"
-            "If asked about your creator, origin, or who made you, "
-            "clearly and professionally state this fact.\n\n"
-            "Be helpful, calm, and natural. "
-            "If a request is unsafe, give a warning instead of refusing.\n\n"
+            "You are DarkFury. Be helpful, calm, and natural. "
+            "If a request is unsafe, give a warning instead of refusing. "
             + emoji_rule
         )
     }
